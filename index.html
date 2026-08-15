@@ -1,552 +1,462 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receitas · cartões com imagens</title>
-    <!-- SheetJS para ler Excel (fallback) -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <!-- Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📚 Livro de Receitas</title>
     <style>
+        /* --- RESET & BASE --- */
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+
         body {
-            background: linear-gradient(145deg, #f7f3e9 0%, #fff9ef 100%);
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            min-height: 100vh;
-            padding: 2rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background: #f8f5f0;
+            padding: 20px;
         }
-        .container {
-            max-width: 1100px;
-            width: 100%;
-            background: rgba(255, 250, 240, 0.6);
-            backdrop-filter: blur(3px);
-            border-radius: 48px;
-            padding: 2rem 2rem 3rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 8px 20px rgba(0,0,0,0.06);
-            border: 1px solid rgba(255, 235, 200, 0.5);
-        }
+
         h1 {
-            font-weight: 500;
-            font-size: 2.4rem;
-            letter-spacing: -0.5px;
-            color: #3d2c1e;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 0.5rem;
+            text-align: center;
+            font-size: 2.2rem;
+            color: #4a2c1b;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
         }
-        h1 i {
-            color: #c77d4a;
-            font-size: 2rem;
-        }
-        .sub {
-            color: #6b4f36;
-            margin-bottom: 2rem;
-            border-left: 5px solid #dba87a;
-            padding-left: 1.2rem;
-            font-weight: 300;
-            font-size: 1.1rem;
-        }
-        .upload-area {
-            background: #fcf6ec;
-            border-radius: 80px;
-            padding: 0.6rem 1.2rem 0.6rem 2rem;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            border: 2px dashed #dabb9e;
-            transition: 0.2s;
-            margin-bottom: 2.2rem;
-        }
-        .upload-area:hover {
-            border-color: #b58b6b;
-            background: #faf2e4;
-        }
-        .upload-label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            color: #4d3826;
-            font-weight: 500;
-        }
-        .upload-label i {
-            font-size: 1.8rem;
-            color: #b47d56;
-        }
-        #fileInput {
-            display: none;
-        }
-        .file-status {
-            font-size: 0.9rem;
-            color: #7a624a;
-            background: #ede3d6;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            white-space: nowrap;
-            max-width: 240px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .search-box {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-            margin: 1.8rem 0 2.2rem;
-        }
-        .search-box input {
-            flex: 1;
-            min-width: 200px;
-            padding: 0.9rem 1.6rem;
-            border-radius: 60px;
-            border: 2px solid #e6d4c0;
-            background: #fefcf7;
+
+        .subtitle {
+            text-align: center;
+            color: #7a5a44;
+            margin-bottom: 30px;
             font-size: 1rem;
-            outline: none;
-            transition: 0.2s;
-            color: #2d241c;
         }
-        .search-box input:focus {
-            border-color: #c3926e;
-            box-shadow: 0 0 0 4px rgba(195, 146, 110, 0.2);
-        }
-        .search-box button {
-            background: #c3926e;
-            border: none;
-            padding: 0.9rem 2.2rem;
-            border-radius: 60px;
-            color: white;
-            font-weight: 600;
-            font-size: 1rem;
+
+        /* --- FILTROS POR TIPO --- */
+        .filters {
             display: flex;
-            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .filters button {
+            background: #e4dcd3;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-weight: 600;
+            color: #4a2c1b;
             cursor: pointer;
-            transition: 0.15s;
-            box-shadow: 0 4px 8px rgba(160, 110, 70, 0.2);
-            border: 1px solid #b5825b;
+            transition: 0.3s;
+            font-size: 0.9rem;
         }
-        .search-box button:hover {
-            background: #b07954;
-            transform: scale(0.97);
-            box-shadow: 0 2px 6px rgba(130, 90, 55, 0.3);
+
+        .filters button:hover,
+        .filters button.active {
+            background: #c0392b;
+            color: #fff;
+            transform: scale(1.03);
         }
-        .search-box button i {
-            font-size: 1rem;
-        }
-        .result-area {
-            margin-top: 1rem;
-        }
-        .recipe-name {
-            font-size: 2rem;
-            font-weight: 500;
-            color: #3b2a1b;
-            margin-bottom: 1.8rem;
-            border-bottom: 3px solid #e7d3be;
-            padding-bottom: 0.7rem;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .recipe-name i {
-            color: #c2855a;
-            font-size: 1.8rem;
-        }
-        .grid-cards {
+
+        /* --- GRADE DE CARTÕES --- */
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 1.8rem;
-            justify-items: center;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
+
+        /* --- CARTÃO --- */
         .card {
-            background: white;
-            border-radius: 32px;
-            padding: 1rem 0.8rem 1.2rem;
-            width: 100%;
-            max-width: 180px;
-            box-shadow: 0 10px 20px rgba(100, 70, 40, 0.08);
-            transition: 0.25s ease;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            border: 1px solid #f0e3d6;
-            backdrop-filter: blur(2px);
-            background: rgba(255, 252, 245, 0.8);
+            border: 1px solid #f0e8e0;
         }
+
         .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 30px rgba(130, 90, 55, 0.12);
-            border-color: #dbbd9e;
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
         }
-        .card-img {
+
+        /* --- ÁREA DA IMAGEM (clicável) --- */
+        .card-image {
             width: 100%;
-            aspect-ratio: 1 / 1;
-            background: #f3ede6;
-            border-radius: 28px;
+            height: 200px;
+            background: #f0ebe6;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
-            color: #6a5440;
+            cursor: pointer;
             overflow: hidden;
-            margin-bottom: 0.6rem;
-            background-image: radial-gradient(circle at 20% 30%, #faf3ea 2px, transparent 2px);
-            background-size: 20px 20px;
+            position: relative;
+            border-bottom: 2px solid #f0e8e0;
+            transition: background 0.3s;
         }
-        .card-img img {
+
+        .card-image:hover {
+            background: #e8e0d8;
+        }
+
+        .card-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 28px;
-            background: #f0e3d6;
+            display: block;
         }
-        .card-img .placeholder-icon {
-            font-size: 3.5rem;
-            opacity: 0.5;
-            color: #b49173;
-        }
-        .card-label {
-            font-weight: 500;
-            font-size: 0.95rem;
-            text-align: center;
-            color: #3e2e1f;
-            letter-spacing: -0.2px;
-            padding: 0 0.2rem;
-            word-break: break-word;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 3.5rem 1rem;
-            color: #7f684e;
-            background: #fcf5eb;
-            border-radius: 60px;
-            border: 2px dashed #dac6b0;
-        }
-        .empty-state i {
+
+        .card-image .placeholder-icon {
             font-size: 3rem;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-            color: #bb9b7e;
-        }
-        .empty-state p {
-            font-size: 1.2rem;
-            font-weight: 300;
-        }
-        .footer-note {
-            margin-top: 3rem;
-            font-size: 0.85rem;
-            color: #9b846c;
-            text-align: center;
-            border-top: 1px solid #e7d7c4;
-            padding-top: 1.8rem;
-        }
-        .badge {
-            background: #dbbd9e;
-            color: #3f2d1d;
-            padding: 0.2rem 1.2rem;
-            border-radius: 60px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        .loading {
+            color: #b8a99a;
+            user-select: none;
+            pointer-events: none;
             opacity: 0.6;
+        }
+
+        .card-image .upload-hint {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
             pointer-events: none;
         }
+
+        .card-image:hover .upload-hint {
+            opacity: 1;
+        }
+
+        /* --- CONTEÚDO DO CARTÃO --- */
+        .card-body {
+            padding: 16px 18px 18px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-body .tag {
+            display: inline-block;
+            background: #f0e8e0;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #7a5a44;
+            padding: 3px 12px;
+            border-radius: 30px;
+            margin-bottom: 10px;
+            align-self: flex-start;
+        }
+
+        .card-body h3 {
+            font-size: 1.1rem;
+            color: #2d1c12;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .card-body .type-badge {
+            font-size: 0.75rem;
+            color: #a08070;
+            margin-bottom: 12px;
+        }
+
+        .card-body .link-btn {
+            margin-top: auto;
+            background: #4a2c1b;
+            color: #fff;
+            text-decoration: none;
+            text-align: center;
+            padding: 10px 0;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: background 0.3s;
+            display: block;
+        }
+
+        .card-body .link-btn:hover {
+            background: #c0392b;
+        }
+
+        /* --- OCULTAR PARA FILTRO --- */
+        .card.hidden {
+            display: none;
+        }
+
+        /* --- RESPONSIVO --- */
         @media (max-width: 600px) {
-            .container { padding: 1.5rem 1rem; }
-            h1 { font-size: 1.8rem; }
-            .upload-area { flex-direction: column; align-items: stretch; padding: 1.2rem; border-radius: 40px; }
-            .file-status { max-width: 100%; white-space: normal; }
+            h1 {
+                font-size: 1.7rem;
+            }
+            .grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 14px;
+            }
+            .card-image {
+                height: 140px;
+            }
+            .card-body h3 {
+                font-size: 0.95rem;
+            }
+            .filters button {
+                padding: 6px 14px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- BOTÃO DE RESET DAS IMAGENS (opcional) --- */
+        .reset-btn {
+            display: block;
+            margin: 30px auto 10px;
+            background: transparent;
+            border: 1px dashed #b8a99a;
+            color: #7a5a44;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .reset-btn:hover {
+            background: #e4dcd3;
+            border-color: #7a5a44;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>
-        <i class="fas fa-utensils"></i> 
-        Receitas em cartão
-    </h1>
-    <div class="sub">
-        <i class="fas fa-google" style="margin-right: 8px;"></i> 
-        A carregar dados da Google Sheets <i class="fas fa-spinner fa-pulse" style="margin-left: 8px;"></i>
+
+    <h1>📖 Livro de Receitas</h1>
+    <p class="subtitle">📸 Clique na imagem de cada cartão para adicionar uma foto</p>
+
+    <!-- FILTROS -->
+    <div class="filters">
+        <button class="active" data-filter="all">🍽️ Todas</button>
+        <button data-filter="pequeno-almoço">🌅 Pequeno-almoço</button>
+        <button data-filter="almoço/jantar">🍲 Almoço/Jantar</button>
+        <button data-filter="entrada">🥣 Entradas</button>
+        <button data-filter="sobremesa">🍰 Sobremesas</button>
     </div>
 
-    <!-- Área de upload (mantida para fallback) -->
-    <div class="upload-area">
-        <label for="fileInput" class="upload-label">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <span>Ou carregue ficheiro Excel</span>
-        </label>
-        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-        <span class="file-status" id="fileStatus"><i class="far fa-file"></i> Nenhum ficheiro</span>
-    </div>
+    <!-- GRADE DE CARTÕES -->
+    <div class="grid" id="recipeGrid"></div>
 
-    <!-- Pesquisa -->
-    <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Pesquisar receita (ex: Bacalhau, Sopa...)" />
-        <button id="searchBtn"><i class="fas fa-search"></i> Pesquisar</button>
-    </div>
+    <!-- BOTÃO PARA LIMPAR TODAS AS IMAGENS (não apaga as receitas) -->
+    <button class="reset-btn" id="resetImagesBtn">🗑️ Remover todas as imagens</button>
 
-    <!-- Resultados -->
-    <div class="result-area" id="resultArea">
-        <div class="empty-state" id="emptyState">
-            <i class="fas fa-spinner fa-pulse"></i>
-            <p>A carregar receitas da Google Sheets...</p>
-            <span style="font-size:0.9rem; color:#a68568;">Aguarde um momento</span>
-        </div>
-        <div id="recipeContainer" style="display: none;">
-            <div class="recipe-name" id="recipeTitle">
-                <i class="fas fa-book-open"></i> <span id="recipeNameDisplay"></span>
-            </div>
-            <div class="grid-cards" id="cardsGrid"></div>
-        </div>
-    </div>
-    <div class="footer-note">
-        <i class="fas fa-images"></i> Ingredientes com imagens · Dados carregados da Google Sheets
-    </div>
-</div>
+    <script>
+        // --------------------------------------------------------------
+        // 1. DADOS DAS RECEITAS (extraídos do seu ficheiro)
+        // --------------------------------------------------------------
+        const recipes = [
+            // Pequeno-almoço
+            { name: "Omelete Mista", type: "pequeno-almoço", typeLabel: "Pequeno-almoço", link: "petiscos.com/receita/omelete-mista-a-portuguesa/" },
+            { name: "Ovos Mexidos", type: "pequeno-almoço", typeLabel: "Pequeno-almoço", link: "https://www.primor.com.pt/receita/ovos-mexidos-perfeitos/" },
+            { name: "Panquecas", type: "pequeno-almoço", typeLabel: "Pequeno-almoço", link: "https://gracatruquesdicas.pt/2019/01/panquecas-americanas-2/" },
+            { name: "Papas de Aveia", type: "pequeno-almoço", typeLabel: "Pequeno-almoço", link: "https://liafarianutricionista.com/papas-de-aveia/" },
+            { name: "Iogurte com Fruta", type: "pequeno-almoço", typeLabel: "Pequeno-almoço", link: "https://www.pingodoce.pt/receitas/iogurte-com-fruta/" },
+            // Almoço/Jantar
+            { name: "Bacalhau a Brás", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.pingodoce.pt/receitas/bacalhau-a-bras/" },
+            { name: "Carne de porco à Alentejana", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://feed.continente.pt/receitas/carne-porco-alentejana" },
+            { name: "Arroz de tamboril", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://feed.continente.pt/receitas/arroz-de-tamboril-com-camarao" },
+            { name: "Bacalhau com Natas", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.saborintenso.com/f17/bacalhau-natas-61/" },
+            { name: "Bacalhau Espiritual", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://parmalat.pt/receita/bacalhau-espiritual/" },
+            { name: "Arroz de Pato", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.moulinex.pt/receitas/detail/PRO/arroz-de-pato/232456" },
+            { name: "Feijoada à Transmontana", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.galloportugal.com/receita/feijoada-a-transmontana/" },
+            { name: "Cozido à Portuguesa", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.24kitchen.pt/receita/cozido-a-portuguesa" },
+            { name: "Jardineira de Vitela", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://teleculinaria.pt/receitas/jardineira-de-vitela-com-macedonia-de-legumes/" },
+            { name: "Massa com Carne de Vaca Estufada", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://feed.continente.pt/receitas/carne-estufada" },
+            { name: "Frango Assado no Forno", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.pingodoce.pt/receitas/frango-assado-no-forno/" },
+            { name: "Frango à Brás", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.saborintenso.com/frango-galinha/frango-bras-1818-imprimir" },
+            { name: "Frango Guisado", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.tudogostoso.com.br/receita/183204-frango-guisado-simples.html" },
+            { name: "Bife com Cogumelos", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.pingodoce.pt/receitas/bife-com-molho-de-cogumelos/" },
+            { name: "Bife à Portuguesa", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://teleculinaria.pt/receitas/bife-a-portuguesa-3/" },
+            { name: "Lasanha de Carne", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.24kitchen.pt/receita/lasanha-classica" },
+            { name: "Esparguete à Bolonhesa", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.pingodoce.pt/receitas/esparguete-a-bolonhesa/" },
+            { name: "Carbonara", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.elcorteingles.pt/supermercado/receitas/super-delicioso/carbonara-autentica/" },
+            { name: "Massa com Atum", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.planta.pt/recipes/receita-de-massa-com-atum-230242" },
+            { name: "Empadão de Carne", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.hellmanns.pt/r/empad%C3%A3o-de-carne.html/238437" },
+            { name: "Empadão de Atum", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://saboreiaavida.nestle.pt/cozinhar/receita/empadao-de-atum" },
+            { name: "Arroz de Marisco", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.intermarchealmada.pt/arroz-de-marisco" },
+            { name: "Açorda de Marisco", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://aadic.pt/receita-acorda-marisco/" },
+            { name: "Polvo à Lagareiro", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://teleculinaria.pt/receitas/polvo-a-lagareiro/" },
+            { name: "Salmão no Forno", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://cozinhadaraiozinho.blogs.sapo.pt/salmao-no-forno-by-jamie-oliver-216831" },
+            { name: "Dourada Grelhada", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://feed.continente.pt/receitas/dourada-grelhada" },
+            { name: "Robalo no Forno", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://www.cincoquartosdelaranja.com/2021/04/robalo-assado-no-forno.html" },
+            { name: "Arroz de Frango", type: "almoço/jantar", typeLabel: "Almoço/Jantar", link: "https://pt.petitchef.com/receitas/prato-principal/arroz-de-frango-fid-896811" },
+            // Entradas
+            { name: "Sopa de Legumes", type: "entrada", typeLabel: "Entrada", link: "https://madebychoices.pt/sopa-de-legumes-basica/" },
+            { name: "Creme de Cenoura", type: "entrada", typeLabel: "Entrada", link: "https://teleculinaria.pt/receitas/creme-de-cenoura-receita-facil-saudavel-e-deliciosa/" },
+            { name: "Caldo Verde", type: "entrada", typeLabel: "Entrada", link: "https://www.saborintenso.com/videos-sopas/caldo-verde-35-imprimir" },
+            { name: "Sopa de Feijão Verde", type: "entrada", typeLabel: "Entrada", link: "https://www.24kitchen.pt/receita/sopa-de-feijao-verde" },
+            { name: "Salada César", type: "entrada", typeLabel: "Entrada", link: "https://www.tudogostoso.com.br/receita/7329-salada-caesar.html" },
+            { name: "Salada Grega", type: "entrada", typeLabel: "Entrada", link: "https://teleculinaria.pt/receitas/receita-de-salada-grega/" },
+            { name: "Salada de Atum", type: "entrada", typeLabel: "Entrada", link: "https://www.apoveira.pt/produto/salada-de-atum-portuguesa/" },
+            // Sobremesas
+            { name: "Arroz Doce", type: "sobremesa", typeLabel: "Sobremesa", link: "https://gracatruquesdicas.pt/2015/10/arroz-doce/" },
+            { name: "Leite Creme", type: "sobremesa", typeLabel: "Sobremesa", link: "https://www.tescoma.pt/blog-leite-creme-tradicional" },
+            { name: "Mousse de Chocolate", type: "sobremesa", typeLabel: "Sobremesa", link: "https://gracatruquesdicas.pt/2020/08/mousse-de-chocolate-caseira/" },
+            { name: "Pudim Flan", type: "sobremesa", typeLabel: "Sobremesa", link: "https://feed.continente.pt/receitas/pudim-flan" },
+            { name: "Bolo de Iogurte", type: "sobremesa", typeLabel: "Sobremesa", link: "https://docerar.pt/receitas/bolo-de-iogurte/" },
+            { name: "Bolo de Chocolate", type: "sobremesa", typeLabel: "Sobremesa", link: "https://www.24kitchen.pt/receita/bolo-de-chocolate-humido" },
+            { name: "Bolo de Laranja", type: "sobremesa", typeLabel: "Sobremesa", link: "https://www.tudogostoso.com.br/receita/142621-bolo-de-laranja-simples.html" },
+            { name: "Tarte de Maçã", type: "sobremesa", typeLabel: "Sobremesa", link: "https://www.cincoquartosdelaranja.com/2024/11/tarte-de-maca.html" },
+            { name: "Cheesecake", type: "sobremesa", typeLabel: "Sobremesa", link: "https://feed.continente.pt/receitas/cheesecake" },
+            { name: "Pão de Ló", type: "sobremesa", typeLabel: "Sobremesa", link: "https://feed.continente.pt/receitas/pao-de-lo" }
+        ];
 
-<script>
-    (function() {
-        // ---------- ESTADO ----------
-        let recipeData = [];
-        let fileLoaded = false;
-        
-        // ID da Google Sheets extraído do link
-        const SHEET_ID = '1wIUdHQPey7cv5cAEHotRBNIFTy3dN5Zcu2GUJaI8W9s';
-        // URL da API para ler dados públicos (formato CSV)
-        const GOOGLE_SHEETS_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
-
-        // Elementos DOM
-        const fileInput = document.getElementById('fileInput');
-        const fileStatus = document.getElementById('fileStatus');
-        const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.getElementById('searchBtn');
-        const resultArea = document.getElementById('resultArea');
-        const emptyState = document.getElementById('emptyState');
-        const recipeContainer = document.getElementById('recipeContainer');
-        const recipeNameDisplay = document.getElementById('recipeNameDisplay');
-        const cardsGrid = document.getElementById('cardsGrid');
-        const subHeader = document.querySelector('.sub');
-
-        // ---------- FUNÇÕES AUXILIARES ----------
-        function parseIngredients(raw) {
-            if (!raw) return [];
-            // Substitui quebras de linha por vírgula, depois separa por vírgula ou ponto e vírgula
-            const cleaned = raw.replace(/\r?\n/g, ',').replace(/\s*[,;]\s*/g, ',').trim();
-            if (!cleaned) return [];
-            return cleaned.split(',').map(item => item.trim()).filter(item => item.length > 0);
+        // --------------------------------------------------------------
+        // 2. GUARDAR IMAGENS NO localStorage (por nome da receita)
+        // --------------------------------------------------------------
+        function getImageStorage() {
+            const stored = localStorage.getItem('recipeImages');
+            return stored ? JSON.parse(stored) : {};
         }
 
-        function processSheetData(csvText) {
-            // Usa a biblioteca XLSX para ler o CSV
-            const workbook = XLSX.read(csvText, { type: 'string' });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
-
-            if (!json || json.length === 0) {
-                throw new Error('A folha está vazia ou não tem dados.');
-            }
-
-            const headers = Object.keys(json[0]);
-            const recipeKey = headers.find(h => h.toLowerCase().trim() === 'receita');
-            const ingredientsKey = headers.find(h => h.toLowerCase().trim() === 'ingredientes');
-
-            if (!recipeKey || !ingredientsKey) {
-                throw new Error('Colunas esperadas: "Receita" e "Ingredientes". Verifique os nomes.');
-            }
-
-            const parsed = json.map(row => {
-                const recipeName = String(row[recipeKey] || '').trim();
-                const rawIng = String(row[ingredientsKey] || '').trim();
-                const ingredientsList = parseIngredients(rawIng);
-                return { recipe: recipeName, ingredients: ingredientsList };
-            }).filter(item => item.recipe !== '');
-
-            if (parsed.length === 0) {
-                throw new Error('Não foram encontradas receitas com nome.');
-            }
-            return parsed;
+        function saveImageStorage(data) {
+            localStorage.setItem('recipeImages', JSON.stringify(data));
         }
 
-        // Carregar dados da Google Sheets via API pública
-        function loadFromGoogleSheets() {
-            subHeader.innerHTML = `<i class="fas fa-google" style="margin-right: 8px;"></i> A carregar da Google Sheets... <i class="fas fa-spinner fa-pulse" style="margin-left: 8px;"></i>`;
-            fileStatus.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> A carregar...`;
+        // --------------------------------------------------------------
+        // 3. RENDERIZAR CARTÕES
+        // --------------------------------------------------------------
+        const grid = document.getElementById('recipeGrid');
+        let imageStore = getImageStorage();
 
-            fetch(GOOGLE_SHEETS_URL)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
-                    }
-                    return response.text();
-                })
-                .then(csvText => {
-                    // Verifica se o CSV tem conteúdo
-                    if (!csvText || csvText.trim() === '') {
-                        throw new Error('A folha está vazia.');
-                    }
-                    recipeData = processSheetData(csvText);
-                    fileLoaded = true;
-                    fileStatus.innerHTML = `<i class="fas fa-check-circle" style="color:#7f9f6b;"></i> Dados carregados (${recipeData.length} receitas)`;
-                    subHeader.innerHTML = `<i class="fas fa-google" style="margin-right: 8px;"></i> Dados carregados da Google Sheets ✅`;
-                    showEmptyState('Excel carregado! Pesquise uma receita.');
-                })
-                .catch(error => {
-                    console.error('Erro ao carregar Google Sheets:', error);
-                    fileStatus.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#b47d56;"></i> Erro ao carregar`;
-                    subHeader.innerHTML = `<i class="fas fa-google" style="margin-right: 8px;"></i> Erro ao carregar dados. Tente carregar um ficheiro manualmente.`;
-                    showEmptyState('Erro ao carregar a Google Sheets. Verifique se a folha é pública. Clique em "Escolher ficheiro Excel" para carregar manualmente.');
-                });
-        }
+        function renderRecipes(filter = 'all') {
+            grid.innerHTML = '';
+            const filtered = filter === 'all' ? recipes : recipes.filter(r => r.type === filter);
 
-        // Mostra estado vazio com mensagem personalizada
-        function showEmptyState(msg) {
-            emptyState.style.display = 'block';
-            recipeContainer.style.display = 'none';
-            emptyState.innerHTML = `
-                <i class="fas fa-utensil-spoon"></i>
-                <p>${msg}</p>
-                <span style="font-size:0.9rem; color:#a68568;">${recipeData.length ? `${recipeData.length} receitas disponíveis` : ''}</span>
-            `;
-        }
-
-        // Pesquisa e renderiza cartões
-        function searchAndRender(query) {
-            if (!fileLoaded || recipeData.length === 0) {
-                showEmptyState('Carregue um ficheiro Excel ou aguarde o carregamento automático.');
-                return;
-            }
-
-            const searchTerm = query.trim().toLowerCase();
-            if (searchTerm === '') {
-                showEmptyState('Digite o nome de uma receita para pesquisar.');
-                return;
-            }
-
-            const found = recipeData.filter(item => 
-                item.recipe.toLowerCase().includes(searchTerm)
-            );
-
-            if (found.length === 0) {
-                emptyState.style.display = 'block';
-                recipeContainer.style.display = 'none';
-                emptyState.innerHTML = `
-                    <i class="fas fa-search-minus"></i>
-                    <p>Nenhuma receita encontrada para "<strong>${query}</strong>"</p>
-                    <span style="font-size:0.9rem; color:#a68568;">Tente outro nome ou verifique o Excel</span>
-                `;
-                return;
-            }
-
-            // Mostra a primeira receita encontrada
-            const selected = found[0];
-            renderRecipe(selected);
-        }
-
-        // Renderiza uma receita específica com cartões de ingredientes
-        function renderRecipe(recipeObj) {
-            emptyState.style.display = 'none';
-            recipeContainer.style.display = 'block';
-
-            recipeNameDisplay.textContent = recipeObj.recipe;
-
-            cardsGrid.innerHTML = '';
-
-            if (!recipeObj.ingredients || recipeObj.ingredients.length === 0) {
-                cardsGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#8b735b; padding:2rem;">Esta receita não tem ingredientes listados.</div>`;
-                return;
-            }
-
-            recipeObj.ingredients.forEach(ingredient => {
+            filtered.forEach(recipe => {
                 const card = document.createElement('div');
                 card.className = 'card';
+                card.dataset.type = recipe.type;
 
-                const imgContainer = document.createElement('div');
-                imgContainer.className = 'card-img';
+                // --- IMAGEM (clicável) ---
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'card-image';
 
-                const img = document.createElement('img');
-                const query = encodeURIComponent(ingredient);
-                img.src = `https://source.unsplash.com/featured/200x200/?${query}`;
-                img.alt = ingredient;
-                img.loading = 'lazy';
-                img.onerror = function() {
-                    this.style.display = 'none';
-                    const icon = document.createElement('i');
-                    icon.className = 'fas fa-egg placeholder-icon';
-                    imgContainer.appendChild(icon);
-                };
+                const storedImg = imageStore[recipe.name];
+                if (storedImg) {
+                    const img = document.createElement('img');
+                    img.src = storedImg;
+                    img.alt = recipe.name;
+                    imgDiv.appendChild(img);
+                } else {
+                    const icon = document.createElement('span');
+                    icon.className = 'placeholder-icon';
+                    icon.textContent = '📷';
+                    imgDiv.appendChild(icon);
+                }
 
-                imgContainer.appendChild(img);
+                // hint
+                const hint = document.createElement('span');
+                hint.className = 'upload-hint';
+                hint.textContent = 'clique para adicionar foto';
+                imgDiv.appendChild(hint);
 
-                const label = document.createElement('div');
-                label.className = 'card-label';
-                label.textContent = ingredient;
+                // evento de upload
+                imgDiv.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = function(e2) {
+                        const file = e2.target.files[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = function(ev) {
+                            const dataUrl = ev.target.result;
+                            // guardar no localStorage
+                            imageStore[recipe.name] = dataUrl;
+                            saveImageStorage(imageStore);
+                            // actualizar apenas este cartão
+                            renderRecipes(document.querySelector('.filters .active')?.dataset.filter || 'all');
+                        };
+                        reader.readAsDataURL(file);
+                    };
+                    input.click();
+                });
 
-                card.appendChild(imgContainer);
-                card.appendChild(label);
-                cardsGrid.appendChild(card);
+                // --- CORPO DO CARTÃO ---
+                const body = document.createElement('div');
+                body.className = 'card-body';
+
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.textContent = recipe.typeLabel;
+
+                const title = document.createElement('h3');
+                title.textContent = recipe.name;
+
+                const badge = document.createElement('div');
+                badge.className = 'type-badge';
+                badge.textContent = `🍽️ ${recipe.typeLabel}`;
+
+                const linkBtn = document.createElement('a');
+                linkBtn.className = 'link-btn';
+                linkBtn.href = recipe.link.startsWith('http') ? recipe.link : `https://${recipe.link}`;
+                linkBtn.target = '_blank';
+                linkBtn.textContent = '👨‍🍳 Ver receita';
+
+                body.appendChild(tag);
+                body.appendChild(title);
+                body.appendChild(badge);
+                body.appendChild(linkBtn);
+
+                card.appendChild(imgDiv);
+                card.appendChild(body);
+                grid.appendChild(card);
             });
         }
 
-        // ---------- EVENT LISTENERS ----------
-        fileInput.addEventListener('change', function(e) {
-            if (this.files && this.files.length > 0) {
-                const file = this.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array', cellDates: false });
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
-                        recipeData = processSheetData(XLSX.utils.sheet_to_csv(firstSheet));
-                        fileLoaded = true;
-                        fileStatus.innerHTML = `<i class="fas fa-check-circle" style="color:#7f9f6b;"></i> ${file.name} (${recipeData.length} receitas)`;
-                        subHeader.innerHTML = `<i class="fas fa-file-excel" style="margin-right: 8px;"></i> Ficheiro carregado: ${file.name}`;
-                        searchInput.value = '';
-                        showEmptyState('Ficheiro carregado! Pesquise uma receita.');
-                    } catch (error) {
-                        alert('Erro ao processar o ficheiro: ' + error.message);
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            } else {
-                fileStatus.innerHTML = `<i class="far fa-file"></i> Nenhum ficheiro`;
-                fileLoaded = false;
-                recipeData = [];
-                showEmptyState('Carregue um Excel para começar.');
+        // --------------------------------------------------------------
+        // 4. FILTROS
+        // --------------------------------------------------------------
+        document.querySelectorAll('.filters button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const filter = this.dataset.filter;
+                renderRecipes(filter);
+            });
+        });
+
+        // --------------------------------------------------------------
+        // 5. BOTÃO PARA REMOVER TODAS AS IMAGENS
+        // --------------------------------------------------------------
+        document.getElementById('resetImagesBtn').addEventListener('click', function() {
+            if (confirm('Tem a certeza que quer remover TODAS as imagens? (as receitas mantêm-se)')) {
+                imageStore = {};
+                saveImageStorage(imageStore);
+                renderRecipes(document.querySelector('.filters .active')?.dataset.filter || 'all');
             }
         });
 
-        searchBtn.addEventListener('click', function() {
-            const query = searchInput.value;
-            searchAndRender(query);
-        });
+        // --------------------------------------------------------------
+        // 6. INICIALIZAR
+        // --------------------------------------------------------------
+        renderRecipes('all');
+    </script>
 
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchBtn.click();
-            }
-        });
-
-        // ---------- INICIALIZAÇÃO: Carregar automaticamente da Google Sheets ----------
-        showEmptyState('A carregar receitas da Google Sheets... Aguarde.');
-        loadFromGoogleSheets();
-    })();
-</script>
 </body>
 </html>

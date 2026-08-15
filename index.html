@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receitas · cartões com imagens</title>
-    <!-- SheetJS para ler Excel -->
+    <!-- SheetJS para ler Excel (fallback) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <!-- Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -279,7 +279,7 @@
         Receitas em cartão
     </h1>
     <div class="sub">
-        <i class="fas fa-file-excel" style="margin-right: 8px;"></i> 
+        <i class="fas fa-google" style="margin-right: 8px;"></i> 
         A carregar dados da Google Sheets <i class="fas fa-spinner fa-pulse" style="margin-left: 8px;"></i>
     </div>
 
@@ -323,7 +323,11 @@
         // ---------- ESTADO ----------
         let recipeData = [];
         let fileLoaded = false;
-        const EXCEL_URL = 'https://docs.google.com/spreadsheets/d/1wIUdHQPey7cv5cAEHotRBNIFTy3dN5Zcu2GUJaI8W9s';
+        
+        // ID da Google Sheets extraído do link
+        const SHEET_ID = '1wIUdHQPey7cv5cAEHotRBNIFTy3dN5Zcu2GUJaI8W9s';
+        // URL da API para ler dados públicos (formato CSV)
+        const GOOGLE_SHEETS_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 
         // Elementos DOM
         const fileInput = document.getElementById('fileInput');
@@ -340,15 +344,22 @@
         // ---------- FUNÇÕES AUXILIARES ----------
         function parseIngredients(raw) {
             if (!raw) return [];
+            // Substitui quebras de linha por vírgula, depois separa por vírgula ou ponto e vírgula
             const cleaned = raw.replace(/\r?\n/g, ',').replace(/\s*[,;]\s*/g, ',').trim();
             if (!cleaned) return [];
             return cleaned.split(',').map(item => item.trim()).filter(item => item.length > 0);
         }
 
-        function processExcelData(json) {
+        function processSheetData(csvText) {
+            // Usa a biblioteca XLSX para ler o CSV
+            const workbook = XLSX.read(csvText, { type: 'string' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
             if (!json || json.length === 0) {
-                throw new Error('O Excel está vazio ou não tem dados.');
+                throw new Error('A folha está vazia ou não tem dados.');
             }
+
             const headers = Object.keys(json[0]);
             const recipeKey = headers.find(h => h.toLowerCase().trim() === 'receita');
             const ingredientsKey = headers.find(h => h.toLowerCase().trim() === 'ingredientes');
@@ -370,33 +381,34 @@
             return parsed;
         }
 
-        // Carregar dados a partir de um URL (ArrayBuffer)
-        function loadFromUrl(url) {
-            subHeader.innerHTML = `<i class="fas fa-file-excel" style="margin-right: 8px;"></i> A carregar dados... <i class="fas fa-spinner fa-pulse" style="margin-left: 8px;"></i>`;
+        // Carregar dados da Google Sheets via API pública
+        function loadFromGoogleSheets() {
+            subHeader.innerHTML = `<i class="fas fa-google" style="margin-right: 8px;"></i> A carregar da Google Sheets... <i class="fas fa-spinner fa-pulse" style="margin-left: 8px;"></i>`;
             fileStatus.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> A carregar...`;
 
-            fetch(url)
+            fetch(GOOGLE_SHEETS_URL)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
                     }
-                    return response.arrayBuffer();
+                    return response.text();
                 })
-                .then(arrayBuffer => {
-                    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
-                    recipeData = processExcelData(json);
+                .then(csvText => {
+                    // Verifica se o CSV tem conteúdo
+                    if (!csvText || csvText.trim() === '') {
+                        throw new Error('A folha está vazia.');
+                    }
+                    recipeData = processSheetData(csvText);
                     fileLoaded = true;
                     fileStatus.innerHTML = `<i class="fas fa-check-circle" style="color:#7f9f6b;"></i> Dados carregados (${recipeData.length} receitas)`;
-                    subHeader.innerHTML = `<i class="fas fa-file-excel" style="margin-right: 8px;"></i> Dados carregados da Google Sheets ✅`;
+                    subHeader.innerHTML = `<i class="fas fa-google" style="margin-right: 8px;"></i> Dados carregados da Google Sheets ✅`;
                     showEmptyState('Excel carregado! Pesquise uma receita.');
                 })
                 .catch(error => {
-                    console.error('Erro ao carregar URL:', error);
+                    console.error('Erro ao carregar Google Sheets:', error);
                     fileStatus.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#b47d56;"></i> Erro ao carregar`;
-                    subHeader.innerHTML = `<i class="fas fa-file-excel" style="margin-right: 8px;"></i> Erro ao carregar dados. Tente carregar um ficheiro manualmente.`;
-                    showEmptyState('Erro ao carregar a Google Sheets. Clique em "Escolher ficheiro Excel" para carregar manualmente.');
+                    subHeader.innerHTML = `<i class="fas fa-google" style="margin-right: 8px;"></i> Erro ao carregar dados. Tente carregar um ficheiro manualmente.`;
+                    showEmptyState('Erro ao carregar a Google Sheets. Verifique se a folha é pública. Clique em "Escolher ficheiro Excel" para carregar manualmente.');
                 });
         }
 
@@ -439,6 +451,7 @@
                 return;
             }
 
+            // Mostra a primeira receita encontrada
             const selected = found[0];
             renderRecipe(selected);
         }
@@ -499,7 +512,7 @@
                         const workbook = XLSX.read(data, { type: 'array', cellDates: false });
                         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                         const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
-                        recipeData = processExcelData(json);
+                        recipeData = processSheetData(XLSX.utils.sheet_to_csv(firstSheet));
                         fileLoaded = true;
                         fileStatus.innerHTML = `<i class="fas fa-check-circle" style="color:#7f9f6b;"></i> ${file.name} (${recipeData.length} receitas)`;
                         subHeader.innerHTML = `<i class="fas fa-file-excel" style="margin-right: 8px;"></i> Ficheiro carregado: ${file.name}`;
@@ -530,10 +543,9 @@
             }
         });
 
-        // ---------- INICIALIZAÇÃO: Carregar automaticamente da URL ----------
-        // Mostra estado de carregamento
+        // ---------- INICIALIZAÇÃO: Carregar automaticamente da Google Sheets ----------
         showEmptyState('A carregar receitas da Google Sheets... Aguarde.');
-        loadFromUrl(EXCEL_URL);
+        loadFromGoogleSheets();
     })();
 </script>
 </body>
